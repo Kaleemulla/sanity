@@ -31,7 +31,6 @@ def sanity_check(debug, server, user, port, timeout):
 
                 ret = ""
                 count = 4
-                errors = {"Error1":"Default Password Not Working", "Error2":"Server Not Found"}
 
                 if (debug == "1"):
                         print "\n************** Working on Host "+ server +"\n"
@@ -82,8 +81,8 @@ def sanity_check(debug, server, user, port, timeout):
 
                 stdin1, stdout1, stderr1, ssh1 = ssh_collect(server, user, port, timeout, command1)
 
-                if((len(stdout1) == 0) or ("Error" in stdout1)):
-                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td>"+errors[stdout1] +"</td></tr>"
+                if((len(stderr1) == 0) or ("Error" in stderr1)):
+                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td>"+stderr1 +"</td></tr>"
                         return final(1, ret)
 
 
