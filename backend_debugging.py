@@ -20,8 +20,8 @@ command7 = "df -h | sed 's/ \+/ /g' |grep data02"
 
 def final(count, ret):
         if (count in (1,5,7)):
-                ret+= "<tr></tr>"
-        ret+= "<tr></tr><tr bgcolor=#b5bedb><td></td><td></td><td></td><td></td></tr>"
+                ret+= "<tr><td style=display:none> Hide </td><td style=display:none> Hide </td><td style=display:none> Hide </td><td style=display:none> Hide </td></tr>"
+        ret+= "<tr><td style=display:none> Hide </td><td style=display:none> Hide </td><td style=display:none>Hide </td><td style=display:none>Hide </td> </tr><tr bgcolor=#b5bedb><td style=display:none> Hide </td><td style=display:none> Hide </td><td style=display:none> Hide </td><td style=display:none> Hide </td></tr>"
 
         final = "<tr><td rowspan=\""+ str(count) + "\">" + ret
         return final
@@ -31,7 +31,7 @@ def sanity_check(debug, server, user, port, timeout):
 
                 ret = ""
                 count = 4
-                errors = {"Error1":"Default Password Not Working", "Error2":"Server Not Found"}
+
 
                 if (debug == "1"):
                         print "\n************** Working on Host "+ server +"\n"
@@ -82,8 +82,8 @@ def sanity_check(debug, server, user, port, timeout):
 
                 stdin1, stdout1, stderr1, ssh1 = ssh_collect(server, user, port, timeout, command1)
 
-                if((len(stdout1) == 0) or ("Error" in stdout1)):
-                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td>"+errors[stdout1] +"</td></tr>"
+                if((len(stdout1) == 0) or ("Error" in stderr1)):
+                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red>  Failed </font></td><td>"+stderr1 +"</td></tr>"
                         return final(1, ret)
 
 
@@ -93,14 +93,14 @@ def sanity_check(debug, server, user, port, timeout):
 
 
                 if (int(stdout1[0]) >= int(vcpu)):
-                        ret+= "" + str(server) + "</td><td> vCPU Cores </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Count:"+vcpu+"<br> Current Count:"+ stdout1[0] +"</td></tr>\n"
+                        ret+= "" + str(server) + "</td><td> vCPU Cores </td><td> <font color=green>  Passed </font></td><td> Actual Count:"+vcpu+"<br> Current Count:"+ stdout1[0] +"</td></tr>\n"
                 else:
-                        ret+= "" + str(server) + "</td><td> vCPU Cores </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Count:"+vcpu+"<br> Current Count:"+ stdout1[0] +"</td></tr>\n"
+                        ret+= "" + str(server) + "</td><td> vCPU Cores </td><td> <font color=red>  Failed </font></td><td> Actual Count:"+vcpu+"<br> Current Count:"+ stdout1[0] +"</td></tr>\n"
 
                 if (round(float(stdout2[0].split(" ")[1])/1024/1000) >= float(ram)):
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> Ram Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Size:"+ram+"<br>Current Size:"+ str(round(int(stdout2[0].split(" ")[1])/1024/1000))+ "</td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> Ram Size </td><td> <font color=green>  Passed </font></td><td> Actual Size:"+ram+"<br>Current Size:"+ str(round(int(stdout2[0].split(" ")[1])/1024/1000))+ "</td></tr>\n"
                 else:
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> Ram Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Size:"+ram+"<br>Current Size:"+ str(round(int(stdout2[0].split(" ")[1])/1024/1000))+ "</td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> Ram Size </td><td> <font color=red>  Failed </font></td><td> Actual Size:"+ram+"<br>Current Size:"+ str(round(int(stdout2[0].split(" ")[1])/1024/1000))+ "</td></tr>\n"
 
                 out_hd=0
                 stdout3 = stdout3[1:]
@@ -109,14 +109,14 @@ def sanity_check(debug, server, user, port, timeout):
                 out_hd = out_hd/1024/1024
 
                 if (float(out_hd) >= float(hd)):
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> HD Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td>Actual Size:" + str(hd) +"G <br>Current Size:"+ str(out_hd) +"G </td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> HD Size </td><td> <font color=green>  Passed </font></td><td>Actual Size:" + str(hd) +"G <br>Current Size:"+ str(out_hd) +"G </td></tr>\n"
                 else:
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> HD Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td>Actual Size:" + str(hd) +"G <br>Current Size:"+ str(out_hd) +"G </td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> HD Size </td><td> <font color=red>  Failed </font></td><td>Actual Size:" + str(hd) +"G <br>Current Size:"+ str(out_hd) +"G </td></tr>\n"
 
                 if (float(stdout4[0].split(" ")[1][:-1]) >= float(root)):
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /root Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Size:" + str(root) +"G <br> Current Size:"+ str(stdout4[0].split(" ")[1])+ "</td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /root Size </td><td> <font color=green>  Passed </font></td><td> Actual Size:" + str(root) +"G <br> Current Size:"+ str(stdout4[0].split(" ")[1])+ "</td></tr>\n"
                 else:
-                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /root Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Size:" + str(root) +"G <br> Current Size:"+ str(stdout4[0].split(" ")[1])+ "</td></tr>\n"
+                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /root Size </td><td> <font color=red>  Failed </font></td><td> Actual Size:" + str(root) +"G <br> Current Size:"+ str(stdout4[0].split(" ")[1])+ "</td></tr>\n"
 
                 ssh1.close()
                 ssh2.close()
@@ -127,12 +127,12 @@ def sanity_check(debug, server, user, port, timeout):
                         count = 5
                         stdin5, stdout5, stderr5, ssh5 = ssh_collect(server, user, port, timeout, command5)
                         if(len(stdout5) == 0):
-                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Partition Not Found </td></tr>\n"
+                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=red>  Failed </font></td><td> Partition Not Found </td></tr>\n"
                         else:
                                 if (float(stdout5[0].split(" ")[1][:-1]) >= float(opt)):
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Size:" + str(opt)+ "G <br> Current Size:"+ str(stdout5[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=green>  Passed </font></td><td> Actual Size:" + str(opt)+ "G <br> Current Size:"+ str(stdout5[0].split(" ")[1])+ "</td></tr>\n"
                                 else:
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Size:" + str(opt)+ "G <br> Current Size:"+ str(stdout5[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /opt Size </td><td> <font color=red>  Failed </font></td><td> Actual Size:" + str(opt)+ "G <br> Current Size:"+ str(stdout5[0].split(" ")[1])+ "</td></tr>\n"
                         ssh5.close()
 
                 if ("splin" in server or "rly" in server):
@@ -141,20 +141,20 @@ def sanity_check(debug, server, user, port, timeout):
                         stdin7, stdout7, stderr7, ssh7 = ssh_collect(server, user, port, timeout, command7)
 
                         if(len(stdout6) == 0):
-                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Partition Not Found </td></tr>\n"
+                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=red>  Failed </font></td><td> Partition Not Found </td></tr>\n"
                         else:
                                 if (float(stdout6[0].split(" ")[1][:-1]) >= float(data01)):
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Size:" + str(data01) +"G <br> Current Size:"+ str(stdout6[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=green>  Passed </font></td><td> Actual Size:" + str(data01) +"G <br> Current Size:"+ str(stdout6[0].split(" ")[1])+ "</td></tr>\n"
                                 else:
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Size:" + str(data01) +"G <br> Current Size:"+ str(stdout6[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data01 Size </td><td> <font color=red>  Failed </font></td><td> Actual Size:" + str(data01) +"G <br> Current Size:"+ str(stdout6[0].split(" ")[1])+ "</td></tr>\n"
 
                         if(len(stdout7) == 0):
-                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Partition Not Found </td></tr>\n"
+                                ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=red>  Failed </font></td><td> Partition Not Found </td></tr>\n"
                         else:
                                 if (float(stdout7[0].split(" ")[1][:-1]) >= float(data02)):
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=green> &nbsp&nbsp Passed &nbsp&nbsp</span></td><td> Actual Size:" +str(data02) +"G <br> Current Size:"+ str(stdout7[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=green>  Passed </font></td><td> Actual Size:" +str(data02) +"G <br> Current Size:"+ str(stdout7[0].split(" ")[1])+ "</td></tr>\n"
                                 else:
-                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=red> &nbsp&nbsp Failed &nbsp&nbsp</span></td><td> Actual Size:" +str(data02) +"G <br> Current Size:"+ str(stdout7[0].split(" ")[1])+ "</td></tr>\n"
+                                        ret+= "<tr><td style=display:none>"+ str(server) +"</td><td> /data02 Size </td><td> <font color=red>  Failed </font></td><td> Actual Size:" +str(data02) +"G <br> Current Size:"+ str(stdout7[0].split(" ")[1])+ "</td></tr>\n"
 
                         ssh6.close()
                         ssh7.close()
@@ -175,11 +175,15 @@ if __name__ == "__main__":
                 debug = 0
 
         try:
-                con = _mysql.connect(host = "172.19.254.21", user = "root", passwd = "em7admin", port=int(7706), db = "master_dev")
+                con = _mysql.connect(host = "localhost", user = "root", passwd = "", port=3306, db = "standards", unix_socket="/opt/lampp/var/mysql/mysql.sock")
 
                 con.query("select * from standards.cust_octet where cust_name like '%" + search +"%'")
                 result = con.store_result()
                 octet = result.fetch_row()[0][1]
+
+                con.close()
+
+                con = _mysql.connect(host = "172.19.254.21", user = "root", passwd = "em7admin", port=int(7706), db = "master_dev")
 
                 con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%em7pr%' or device like '%em7mc%' or device like '%em7dc%' or device like '%em7db%') order by id desc ")
                 result_1 = con.store_result()
@@ -187,7 +191,7 @@ if __name__ == "__main__":
                 con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
                 result_2 = con.store_result()
 
-                html  = open("sanity_html_old.txt","r")
+                html  = open("sanity_html.txt","r")
                 display = html.read()
                 check_list = ""
 
@@ -209,15 +213,15 @@ if __name__ == "__main__":
                 if (display.count("Failed") > display.count("Passed")):
                         display = display.replace("32CD32","E50000")
 
-                display = display.replace("Sanity Results","Sanity Results - &nbsp&nbsp&nbsp Total VMs: "+ str(vm_count) +"&nbsp&nbsp&nbsp Passed: "+ str(display.count("Passed")) + "&nbsp&nbsp&nbsp Failed: "+ str(display.count("Failed")))
+                display = display.replace("Sanity Results","Sanity Results -  Total VMs: "+ str(vm_count) +" Passed: "+ str(display.count("Passed")) + " Failed: "+ str(display.count("Failed")))
 
                 if (debug == 1):
                         print "Writing output to HTML File...... \n\n"
 
-                fw = open("/opt/em7/gui/ap/www/cms_op.html","w")
+                fw = open("/opt/lampp/htdocs/debug.html","w")
                 fw.write(display)
                 fw.close()
-
+                print display
 
         except _mysql.Error, e:
 
@@ -226,5 +230,3 @@ if __name__ == "__main__":
         finally:
                 if con:
                         con.close()
-
-
