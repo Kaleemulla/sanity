@@ -1,9 +1,10 @@
+#!/usr/bin/python
+
+import cgi, cgitb
 import sys
 import math
 import _mysql
 import re,ConfigParser
-import time
-from multiprocessing.pool import ThreadPool as Pool
 
 from remote.connection import ssh_collect
 
@@ -18,13 +19,6 @@ command4 = "df -h | sed 's/ \+/ /g' |grep / |head -1"
 command5 = "df -h | sed 's/ \+/ /g' |grep opt"
 command6 = "df -h | sed 's/ \+/ /g' |grep data01"
 command7 = "df -h | sed 's/ \+/ /g' |grep data02"
-pool = Pool(100)
-
-result_list = []
-def log_result(result):
-    # This is called whenever foo_pool(i) returns a result.
-    # result_list is modified only by the main process, not the pool workers.
-    result_list.append(result)
 
 
 def final(count, ret):
@@ -36,22 +30,17 @@ def final(count, ret):
         return final
 
 
-def sanity_check(debug, server):
+def sanity_check(debug, server, user, port, timeout):
 
                 ret = ""
                 count = 4
-
-                if ("em7" in server):
-                        user = "em7admin"
-                else:
-                        user = "root"
 
                 if (debug == "1"):
                         print "\n************** Working on Host "+ server +"\n"
 
 
                 try:
-                        con = _mysql.connect(host = "172.19.254.21", user = "root", passwd = "em7admin", port=int(7706), db = "standards")
+                        con = _mysql.connect(host = "localhost", user = "root", passwd = "", port=3306, db = "standards", unix_socket="/opt/lampp/var/mysql/mysql.sock")
 
                         if ("em7pr" in server):
                                 con.query("select * from a_portals")
@@ -73,30 +62,29 @@ def sanity_check(debug, server):
                         result = con.store_result()
                         row = result.fetch_row()
 
+                        con.close()
+
                 except  _mysql.Error, e:
-                        print "Error %d: %s" % (e.args[0], e.args[1])
+                        print "<h2><center> Error in MySQL Connection inside sanity_check, Please contact Administartor. </center></h2>"
 
-                finally:
-                        if con:
-                                con.close()
 
-                        vcpu = row[0][0]
-                        ram = row[0][1]
-                        hd = row[0][2]
-                        root = row[0][3]
+                vcpu = row[0][0]
+                ram = row[0][1]
+                hd = row[0][2]
+                root = row[0][3]
 
-                        if ("splin" in server or "rly" in server):
-                                opt = row[0][4]
-                                data01 = row[0][5]
-                                data02 = row[0][6]
-                        if ("splm" in server or "spld" in server or "splsr" in server):
-                                opt = row[0][4]
+                if ("splin" in server or "rly" in server):
+                        opt = row[0][4]
+                        data01 = row[0][5]
+                        data02 = row[0][6]
+                if ("splm" in server or "spld" in server or "splsr" in server):
+                        opt = row[0][4]
 
 
                 stdin1, stdout1, stderr1, ssh1 = ssh_collect(server, user, port, timeout, command1)
 
-                if((len(stdout1) == 0) or ("Error" in stderr1)):
-                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red>  Failed </font></td><td>"+stderr1 +"</td></tr>"
+                if((len(stdout1) == 0) or ("Error" in stdout1)):
+                        ret+= "" + str(server) + "</td><td> Server Check </td><td> <font color=red>  Failed </font></td><td>"+errors[stdout1] +"</td></tr>"
                         return final(1, ret)
 
 
@@ -176,10 +164,16 @@ def sanity_check(debug, server):
                 return final(count, ret)
 
 
-
 if __name__ == "__main__":
 
-        search = raw_input("Enter Customer Name: ")
+        form = cgi.FieldStorage()
+
+        # Get data from fields
+        name = form.getvalue("name")
+        search = str(name)
+
+        print "Content-type:text/html\r\n\r\n"
+
         vm_count = 0
 
         if(len(sys.argv)>1):
@@ -198,36 +192,23 @@ if __name__ == "__main__":
 
                 con = _mysql.connect(host = "172.19.254.21", user = "root", passwd = "em7admin", port=int(7706), db = "master_dev")
 
-                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%em7pr%' or device like '%em7mc%' or device like '%em7dc%' or device like '%em7db%' or device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
+                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%em7pr%' or device like '%em7mc%' or device like '%em7dc%' or device like '%em7db%') order by device ")
                 result_1 = con.store_result()
 
-                '''con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
-                result_2 = con.store_result()'''
+                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by device ")
+                result_2 = con.store_result()
 
-                html  = open("sanity_html.txt","r")
+                html  = open("/opt/lampp/cgi-bin/sanity_html.txt","r")
                 display = html.read()
                 check_list = ""
 
-                '''print "****"
                 for row in result_1.fetch_row(100):
                         check_list+= sanity_check(debug, row[0], user, port, timeout)
                         vm_count+=1
 
-                print "****"
                 for row in result_2.fetch_row(100):
                         check_list+= sanity_check(debug, row[0], "root", port, timeout)
-                        vm_count+=1'''
-                results = {}
-                for row in result_1.fetch_row(100):
-                        pool.apply_async(sanity_check, (debug,row[0],), callback = log_result)
-
-
-
-                pool.close()
-                pool.join()
-
-                for table_row in result_list:
-                        check_list += str(table_row)
+                        vm_count+=1
 
                 if (debug == 1):
                         print "Checklist completed ...... \n\n"
@@ -237,21 +218,19 @@ if __name__ == "__main__":
                 if (display.count("Failed") > display.count("Passed")):
                         display = display.replace("32CD32","E50000")
 
-                display = display.replace("Sanity Results","Sanity Results -  Total VMs: "+ str(vm_count) +" Passed: "+ str(display.count("Passed")) + " Failed: "+ str(display.count("Failed")))
+                #display = display.replace("Sanity Results","Sanity Results - Total VMs: "+ str(vm_count) +" Passed: "+ str(display.count("Passed")) + " Failed: "+ str(display.count("Failed")))
 
                 if (debug == 1):
                         print "Writing output to HTML File...... \n\n"
 
-                fw = open("/opt/lampp/htdocs/debug.html","w")
+                fw = open("/opt/lampp/htdocs/cms.html","w")
                 fw.write(display)
                 fw.close()
-                print display
+
+                con.close()
+                print "<meta http-equiv=\"refresh\" content=\"0; url=http://alln1qssntyp01/cms.html\" />"
 
         except _mysql.Error, e:
 
-                print "Error %d: %s" % (e.args[0], e.args[1])
-
-        finally:
-                if con:
-                        con.close()
+                print "<h2><center> Error in MySQL Connection inside __main__, Please contact Administartor. </center></h2>"
 

@@ -2,8 +2,6 @@ import sys
 import math
 import _mysql
 import re,ConfigParser
-import time
-from multiprocessing.pool import ThreadPool as Pool
 
 from remote.connection import ssh_collect
 
@@ -18,13 +16,6 @@ command4 = "df -h | sed 's/ \+/ /g' |grep / |head -1"
 command5 = "df -h | sed 's/ \+/ /g' |grep opt"
 command6 = "df -h | sed 's/ \+/ /g' |grep data01"
 command7 = "df -h | sed 's/ \+/ /g' |grep data02"
-pool = Pool(100)
-
-result_list = []
-def log_result(result):
-    # This is called whenever foo_pool(i) returns a result.
-    # result_list is modified only by the main process, not the pool workers.
-    result_list.append(result)
 
 
 def final(count, ret):
@@ -36,15 +27,11 @@ def final(count, ret):
         return final
 
 
-def sanity_check(debug, server):
+def sanity_check(debug, server, user, port, timeout):
 
                 ret = ""
                 count = 4
 
-                if ("em7" in server):
-                        user = "em7admin"
-                else:
-                        user = "root"
 
                 if (debug == "1"):
                         print "\n************** Working on Host "+ server +"\n"
@@ -198,17 +185,17 @@ if __name__ == "__main__":
 
                 con = _mysql.connect(host = "172.19.254.21", user = "root", passwd = "em7admin", port=int(7706), db = "master_dev")
 
-                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%em7pr%' or device like '%em7mc%' or device like '%em7dc%' or device like '%em7db%' or device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
+                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%em7pr%' or device like '%em7mc%' or device like '%em7dc%' or device like '%em7db%') order by id desc ")
                 result_1 = con.store_result()
 
-                '''con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
-                result_2 = con.store_result()'''
+                con.query("select distinct(device) from legend_device where ip like '" +octet+ "%' and (device like '%spld%' or device like '%splm%' or device like '%splsr%' or device like '%splin%' or device like '%rly%') order by id desc ")
+                result_2 = con.store_result()
 
                 html  = open("sanity_html.txt","r")
                 display = html.read()
                 check_list = ""
 
-                '''print "****"
+                print "****"
                 for row in result_1.fetch_row(100):
                         check_list+= sanity_check(debug, row[0], user, port, timeout)
                         vm_count+=1
@@ -216,18 +203,7 @@ if __name__ == "__main__":
                 print "****"
                 for row in result_2.fetch_row(100):
                         check_list+= sanity_check(debug, row[0], "root", port, timeout)
-                        vm_count+=1'''
-                results = {}
-                for row in result_1.fetch_row(100):
-                        pool.apply_async(sanity_check, (debug,row[0],), callback = log_result)
-
-
-
-                pool.close()
-                pool.join()
-
-                for table_row in result_list:
-                        check_list += str(table_row)
+                        vm_count+=1
 
                 if (debug == 1):
                         print "Checklist completed ...... \n\n"
@@ -254,4 +230,3 @@ if __name__ == "__main__":
         finally:
                 if con:
                         con.close()
-
