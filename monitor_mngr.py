@@ -46,17 +46,52 @@ def check_delay(hosts, cust):
                         result4 = con.store_result()
                         dela = result4.fetch_row(1)[0][0]
 
-                        if(avg is not None):
-                                if (avg < 3):
-                                        delayed += "<tr bgcolor=#89F39E><td><b>"+cust[host]+"</td><td> "+str(mini)+"</td><td>"+str(maxi)+"</td><td>"+str(total)+" </td><td>"+str(dela)+"</td><td>"+str(avg)+ "</td></tr>\n"
-                                elif(avg > 3 and avg < 8):
-                                        delayed += "<tr bgcolor=#F3EC0C><td><b>"+cust[host]+"</td><td> "+str(mini)+"</td><td>"+str(maxi)+"</td><td>"+str(total)+" </td><td>"+str(dela)+"</td><td>"+str(avg)+ "</td></tr>\n"
-                                elif(avg >=8):
-                                        delayed += "<tr bgcolor=#F43308><td><b>"+cust[host]+"</td><td> "+str(mini)+"</td><td>"+str(maxi)+"</td><td>"+str(total)+" </td><td>"+str(dela)+"</td><td>"+str(avg)+ "</td></tr>\n"
+
+
+                        con.query('select sum(count) from (select count(*) as count from master_events.events_active where date_last > subdate(now(),interval 1 day) UNION ALL select count(*) as count from master_events.events_cleared where date_last > subdate(now(),interval 1 day) ) s')
+                        result5 = con.store_result()
+                        events = result5.fetch_row(1)[0][0]
+
+
+
+                        con.query('select tid,time from (select e.tid tid,TIMEDIFF(t.date_create,e.date_active) time from master_events.events_active  e JOIN master_biz.ticketing t  where e.tid=t.tid and t.date_create > e.date_active and t.date_create > subdate(now(),interval 1 day) and e.ecounter=1 group by e.id having time > "00:02:00" UNION ALL select e.tid tid,TIMEDIFF(t.date_create,e.date_active) time from master_events.events_cleared  e JOIN master_biz.ticketing t  where e.tid=t.tid and t.date_create > e.date_active  and t.date_create > subdate(now(),interval 1 day) and e.ecounter=1 group by e.id having time > "00:02:00" ) s order by time desc limit 5;')
+                        result6 = con.store_result()
+
+                        if (result6.num_rows() < 1):
+                                corr = "<td></td><td></td></tr>\n"
                         else:
-                                delayed += "<tr bgcolor=#89F39E><td><b>"+cust[host]+"</td><td> "+str(mini)+"</td><td>"+str(maxi)+"</td><td>"+str(total)+" </td><td>"+str(dela)+"</td><td>"+str(avg)+ "</td></tr>\n"
+                                corr = ""
+
+                        top = ""
+                        count = 0
+                        for row in result6.fetch_row(100):
+                                if(count == 0):
+                                        top += "<td>" + row[0] + "</td><td>" + row[1] + "</td></tr>"
+                                        count +=1
+                                else:
+                                        top += "<tr><td>" + row[0] + "</td><td>" + row[1] + "</td></tr>"
+                                        count +=1
+
+                        if(avg is not None):
+                                if (avg < 4):
+                                        delayed += "<tr bgcolor=#89F39E><td rowspan=COUNT ><b>"+cust[host]+"</td><td rowspan=COUNT> "+str(events)+"</td><td rowspan=COUNT>"+str(total)+"</td><td rowspan=COUNT>"+str(dela)+" </td><td rowspan=COUNT>"+str(mini)+"</td><td rowspan=COUNT>"+str(maxi)+ "</td><td rowspan=COUNT>"+str(avg)+"</td>"+str(top)+ corr+ "\n"
+                                        delayed = delayed.replace("<tr>","<tr bgcolor=#89F39E>")
+
+                                elif(avg > 4 and avg < 10):
+                                        delayed += "<tr  bgcolor=#F3EC0C><td rowspan=COUNT><b>"+cust[host]+"</td><td rowspan=COUNT> "+str(events)+"</td><td rowspan=COUNT>"+str(total)+"</td><td rowspan=COUNT>"+str(dela)+" </td><td rowspan=COUNT>"+str(mini)+"</td><td rowspan=COUNT>"+str(maxi)+ "</td><td rowspan=COUNT>"+str(avg)+"</td>"+str(top)+ corr +"\n"
+                                        delayed = delayed.replace("<tr>","<tr bgcolor=#F3EC0C>")
+
+                                elif(avg >=10):
+                                        delayed += "<tr bgcolor=#F43308><td rowspan=COUNT><b>"+cust[host]+"</td><td rowspan=COUNT> "+str(events)+"</td><td rowspan=COUNT>"+str(total)+"</td><td rowspan=COUNT>"+str(dela)+" </td><td rowspan=COUNT>"+str(mini)+"</td><td rowspan=COUNT>"+str(maxi)+ "</td><td rowspan=COUNT>"+str(avg)+"</td>"+str(top)+ corr +"\n"
+                                        delayed = delayed.replace("<tr>","<tr bgcolor=#F43308>")
+
+                        else:
+                                delayed += "<tr bgcolor=#89F39E><td rowspan=COUNT><b>"+cust[host]+"</td><td rowspan=COUNT> "+str(events)+"</td><td rowspan=COUNT>"+str(total)+"</td><td rowspan=COUNT>"+str(dela)+" </td><td rowspan=COUNT>"+str(mini)+"</td><td rowspan=COUNT>"+str(maxi)+ "</td><td rowspan=COUNT>"+str(avg)+"</td><td></td><td></td></tr>"+str(top)+"\n"
+                                delayed = delayed.replace("<tr>","<tr bgcolor=#89F39E>")
 
 
+
+                        delayed = delayed.replace("COUNT",str(count))
 
 
                         con.close()
